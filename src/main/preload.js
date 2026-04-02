@@ -71,6 +71,7 @@ contextBridge.exposeInMainWorld('masquoteAPI', {
    * 메인 프로세스 이벤트 수신 리스너 등록
    * @param {string} channel - 채널명
    * @param {Function} callback - 콜백 함수
+   * @returns {Function|undefined} 해제용 함수 (off에 전달)
    */
   on: (channel, callback) => {
     const validChannels = [
@@ -82,7 +83,20 @@ contextBridge.exposeInMainWorld('masquoteAPI', {
       'trigger-fired',
     ];
     if (validChannels.includes(channel)) {
-      ipcRenderer.on(channel, (event, ...args) => callback(...args));
+      const wrapped = (_event, ...args) => callback(...args);
+      ipcRenderer.on(channel, wrapped);
+      return wrapped;
+    }
+  },
+
+  /**
+   * 메인 프로세스 이벤트 리스너 해제
+   * @param {string} channel - 채널명
+   * @param {Function} wrapped - on()이 반환한 래핑된 함수
+   */
+  off: (channel, wrapped) => {
+    if (wrapped) {
+      ipcRenderer.removeListener(channel, wrapped);
     }
   },
 });

@@ -5,8 +5,8 @@
  *       메인 프로세스와 렌더러 프로세스 사이의 통신을 중개한다.
  */
 
-const { ipcMain, BrowserWindow } = require('electron');
-const { captureScreen, captureIfChanged, resetChangeDetection } = require('./capturer');
+const { ipcMain } = require('electron');
+const { captureScreen, captureIfChanged } = require('./capturer');
 const { analyzeScreenshot, getUsageStats } = require('./ai-client');
 
 /** 기본 시스템 프롬프트 — Phase 4에서 prompt-manager로 이동 */
@@ -67,7 +67,7 @@ function registerPhase2Handlers(config) {
   });
 
   // 화면 분석 요청 — 캡처 + AI 분석을 한 번에 수행
-  ipcMain.handle('analyze-screen', async (event) => {
+  ipcMain.handle('analyze-screen', async () => {
     try {
       // 화면 캡처
       console.log('[IPC] 화면 캡처 시작...');
@@ -81,8 +81,8 @@ function registerPhase2Handlers(config) {
       }
       console.log(`[IPC] 캡처 성공 (${captureResult.sizeKB}KB), AI 분석 요청...`);
 
-      // AI 분석
-      const result = await analyzeScreenshot(captureResult.base64, {
+      // AI 분석 — 결과는 invoke 응답으로만 반환 (push 이중 전송 방지)
+      return await analyzeScreenshot(captureResult.base64, {
         model: config.ai.primaryModel,
         systemPrompt: DEFAULT_SYSTEM_PROMPT,
         userPrompt: buildUserPrompt(),
@@ -93,32 +93,14 @@ function registerPhase2Handlers(config) {
           hourlyLimit: config.ai.hourlyLimit,
         },
       });
-
-      // 렌더러에 응답 전달
-      const win = BrowserWindow.fromWebContents(event.sender);
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('ai-response', result);
-      }
-
-      return result;
     } catch (err) {
       console.error('[IPC] analyze-screen 오류:', err.message);
-      const errorResult = {
-        text: '앗, 뭔가 문제가 생겼어!',
-        source: 'error',
-      };
-
-      const win = BrowserWindow.fromWebContents(event.sender);
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('ai-error', { message: errorResult.text, code: 'ANALYZE_FAILED' });
-      }
-
-      return errorResult;
+      return { text: '앗, 뭔가 문제가 생겼어!', source: 'error' };
     }
   });
 
   // 변화 감지 캡처 + 분석 — Phase 4 자동 트리거에서 사용
-  ipcMain.handle('analyze-if-changed', async (event) => {
+  ipcMain.handle('analyze-if-changed', async () => {
     try {
       const captureResult = await captureIfChanged(
         config.capture.comparison,
@@ -130,7 +112,7 @@ function registerPhase2Handlers(config) {
         return { text: null, source: 'no_change' };
       }
 
-      const result = await analyzeScreenshot(captureResult.base64, {
+      return await analyzeScreenshot(captureResult.base64, {
         model: config.ai.primaryModel,
         systemPrompt: DEFAULT_SYSTEM_PROMPT,
         userPrompt: buildUserPrompt(),
@@ -141,13 +123,6 @@ function registerPhase2Handlers(config) {
           hourlyLimit: config.ai.hourlyLimit,
         },
       });
-
-      const win = BrowserWindow.fromWebContents(event.sender);
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('ai-response', result);
-      }
-
-      return result;
     } catch (err) {
       console.error('[IPC] analyze-if-changed 오류:', err.message);
       return { text: null, source: 'error' };

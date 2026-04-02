@@ -43,25 +43,23 @@ function initAIClient(apiKey) {
 }
 
 /**
- * 사용량 카운터를 갱신하고 한도 초과 여부를 확인한다.
+ * 사용량 카운터의 만료된 구간을 리셋하고 한도 초과 여부를 확인한다.
  *
  * @param {object} limits - 한도 설정
  * @param {number} limits.dailyLimit - 일일 최대 호출 수
  * @param {number} limits.hourlyLimit - 시간당 최대 호출 수
  * @returns {boolean} 호출 가능 여부 (true면 허용)
  */
-function checkAndUpdateUsage(limits) {
+function checkUsageLimit(limits) {
   const now = Date.now();
   const ONE_HOUR = 60 * 60 * 1000;
   const ONE_DAY = 24 * ONE_HOUR;
 
-  // 시간당 카운터 리셋
   if (now - usageCounter.lastHourlyReset >= ONE_HOUR) {
     usageCounter.hourly = 0;
     usageCounter.lastHourlyReset = now;
   }
 
-  // 일일 카운터 리셋
   if (now - usageCounter.lastDailyReset >= ONE_DAY) {
     usageCounter.daily = 0;
     usageCounter.lastDailyReset = now;
@@ -78,6 +76,14 @@ function checkAndUpdateUsage(limits) {
   }
 
   return true;
+}
+
+/**
+ * API 호출 성공 시 사용량 카운터를 증가시킨다.
+ */
+function incrementUsage() {
+  usageCounter.daily++;
+  usageCounter.hourly++;
 }
 
 /**
@@ -167,7 +173,7 @@ async function analyzeScreenshot(base64Image, options = {}) {
   }
 
   // 사용량 한도 확인
-  if (!checkAndUpdateUsage(limits)) {
+  if (!checkUsageLimit(limits)) {
     return { text: '오늘은 너무 많이 떠들었나봐~ 잠시 쉴게!', source: 'limit' };
   }
 
@@ -179,10 +185,7 @@ async function analyzeScreenshot(base64Image, options = {}) {
 
   try {
     const response = await genAI.models.generateContent(requestConfig);
-
-    // 카운터 증가
-    usageCounter.daily++;
-    usageCounter.hourly++;
+    incrementUsage();
 
     const text = extractText(response);
     if (!text) {
@@ -204,8 +207,7 @@ async function analyzeScreenshot(base64Image, options = {}) {
         const retry = await genAI.models.generateContent(requestConfig);
         const retryText = extractText(retry);
         if (retryText) {
-          usageCounter.daily++;
-          usageCounter.hourly++;
+          incrementUsage();
           console.log('[AI] 재시도 성공:', retryText);
           return { text: retryText, source: 'gemini' };
         }
