@@ -37,6 +37,33 @@ function buildAnalysisOptions(config) {
  * @param {object} config - 앱 설정 객체
  */
 function registerIpcHandlers(config) {
+  // ── 기본 윈도우 제어 ──
+
+  // 클릭 통과 제어 — 투명 영역은 마우스 이벤트를 아래 창으로 통과
+  ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) win.setIgnoreMouseEvents(ignore, options || {});
+  });
+
+  // 윈도우 위치 이동 — 렌더러에서 드래그 중 좌표 전달
+  ipcMain.on('move-window', (event, deltaX, deltaY) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      const bounds = win.getBounds();
+      win.setBounds({
+        x: bounds.x + deltaX,
+        y: bounds.y + deltaY,
+        width: bounds.width,
+        height: bounds.height,
+      });
+    }
+  });
+
+  // 설정 조회
+  ipcMain.handle('get-config', () => config);
+
+  // ── 화면 캡처/분석 ──
+
   // 화면 캡처 요청
   ipcMain.handle('capture-screen', async (_event, options) => {
     try {

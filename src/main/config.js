@@ -36,10 +36,9 @@ function getMinimalConfig() {
       width: 250,
       height: 400,
       alwaysOnTopLevel: 'screen-saver',
-      alwaysOnTopRelativeLevel: 1,
     },
     character: {
-      defaultImage: 'moko.png',
+      defaultImage: 'moko.svg',
     },
     capture: {
       intervalSeconds: 10,

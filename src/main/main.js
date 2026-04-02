@@ -5,7 +5,7 @@
  * 역할: 앱 생명주기 관리, 투명 마스코트 윈도우 생성, IPC 핸들러 등록
  */
 
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, screen } = require('electron');
 const path = require('node:path');
 const { loadConfig } = require('./config');
 const { initAIClient } = require('./ai-client');
@@ -30,7 +30,7 @@ let config = null;
  * @returns {BrowserWindow} 생성된 윈도우 인스턴스
  */
 function createMascotWindow() {
-  const { width, height, alwaysOnTopLevel, alwaysOnTopRelativeLevel } = config.window;
+  const { width, height, alwaysOnTopLevel } = config.window;
 
   const win = new BrowserWindow({
     width,
@@ -51,7 +51,7 @@ function createMascotWindow() {
   });
 
   // 최상위 z-order 설정
-  win.setAlwaysOnTop(true, alwaysOnTopLevel, alwaysOnTopRelativeLevel);
+  win.setAlwaysOnTop(true, alwaysOnTopLevel);
 
   // 초기 위치: 화면 우측 하단 (태스크바 위)
   const display = screen.getPrimaryDisplay();
@@ -70,62 +70,20 @@ function createMascotWindow() {
 }
 
 /**
- * IPC 핸들러를 등록한다.
- * Phase 1: 마우스 이벤트 무시 설정, 드래그 이동
- */
-function registerIpcHandlers() {
-  // 클릭 통과 제어 — 투명 영역은 마우스 이벤트를 아래 창으로 통과
-  ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
-    try {
-      const win = BrowserWindow.fromWebContents(event.sender);
-      if (win) {
-        win.setIgnoreMouseEvents(ignore, options || {});
-      }
-    } catch (err) {
-      console.error('[IPC] set-ignore-mouse-events 오류:', err.message);
-    }
-  });
-
-  // 윈도우 위치 이동 — 렌더러에서 드래그 중 좌표 전달
-  ipcMain.on('move-window', (event, deltaX, deltaY) => {
-    try {
-      const win = BrowserWindow.fromWebContents(event.sender);
-      if (win) {
-        const bounds = win.getBounds();
-        win.setBounds({
-          x: bounds.x + deltaX,
-          y: bounds.y + deltaY,
-          width: bounds.width,
-          height: bounds.height,
-        });
-      }
-    } catch (err) {
-      console.error('[IPC] move-window 오류:', err.message);
-    }
-  });
-
-  // 설정 조회
-  ipcMain.handle('get-config', () => {
-    return config;
-  });
-}
-
-/**
  * 앱 초기화 — 설정 로드, 윈도우 생성, IPC 등록
  */
 app.whenReady().then(() => {
   config = loadConfig();
 
-  // Phase 1 IPC 핸들러
-  registerIpcHandlers();
-
-  // Phase 2: AI 클라이언트 초기화 + 캡처/분석 IPC 핸들러
+  // AI 클라이언트 초기화
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
     initAIClient(geminiKey);
   } else {
     console.warn('[Main] GEMINI_API_KEY가 .env에 설정되지 않았습니다.');
   }
+
+  // 모든 IPC 핸들러 등록 (마우스/드래그/캡처/분석/걷기)
   registerIpcHandlers(config);
 
   mainWindow = createMascotWindow();

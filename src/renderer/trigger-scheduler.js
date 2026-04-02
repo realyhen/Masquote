@@ -42,6 +42,7 @@
     document.addEventListener('mousemove', onActivity);
     document.addEventListener('mousedown', onActivity);
     document.addEventListener('keydown', onActivity);
+    document.addEventListener('wheel', onActivity);
 
     // 주기적으로 idle 상태 확인
     checkInterval = setInterval(checkIdle, CHECK_INTERVAL_MS);
@@ -122,6 +123,7 @@
     document.removeEventListener('mousemove', onActivity);
     document.removeEventListener('mousedown', onActivity);
     document.removeEventListener('keydown', onActivity);
+    document.removeEventListener('wheel', onActivity);
   }
 
   window.TriggerScheduler = { init, markAnalysis, destroy };

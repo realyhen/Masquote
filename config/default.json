@@ -2,14 +2,10 @@
   "window": {
     "width": 250,
     "height": 400,
-    "alwaysOnTopLevel": "screen-saver",
-    "alwaysOnTopRelativeLevel": 1
+    "alwaysOnTopLevel": "screen-saver"
   },
   "character": {
-    "defaultImage": "moko.svg",
-    "idleAnimation": "idle.json",
-    "speakingAnimation": "speaking.json",
-    "walkingAnimation": "walking.json"
+    "defaultImage": "moko.svg"
   },
   "capture": {
     "intervalSeconds": 10,

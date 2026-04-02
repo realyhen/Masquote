@@ -91,10 +91,6 @@ contextBridge.exposeInMainWorld('masquoteAPI', {
     const validChannels = [
       'ai-response',
       'ai-error',
-      'animation-state',
-      'capture-status',
-      'config-updated',
-      'trigger-fired',
       'walking-direction',
     ];
     if (validChannels.includes(channel)) {
