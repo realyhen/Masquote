@@ -140,7 +140,16 @@ async function analyzeScreenshot(base64Image, options = {}) {
     usageCounter.daily++;
     usageCounter.hourly++;
 
-    const text = response?.text?.trim() || '음... 뭐라고 해야 할지 모르겠어!';
+    // 응답 구조 방어적 검증 — SDK 버전에 따라 구조가 다를 수 있음
+    let text = '';
+    if (typeof response?.text === 'string') {
+      text = response.text.trim();
+    } else if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      text = response.candidates[0].content.parts[0].text.trim();
+    }
+    if (!text) {
+      text = '음... 뭐라고 해야 할지 모르겠어!';
+    }
 
     console.log(`[AI] Gemini 응답 (일일 ${usageCounter.daily}/${limits.dailyLimit}): ${text}`);
     return { text, source: 'gemini' };

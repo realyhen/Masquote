@@ -52,6 +52,14 @@ contextBridge.exposeInMainWorld('masquoteAPI', {
   },
 
   /**
+   * 변화 감지 분석 요청 (변화 없으면 스킵, Phase 4 자동 트리거용)
+   * @returns {Promise<{text: string|null, source: string}>} AI 응답 또는 no_change
+   */
+  analyzeIfChanged: () => {
+    return ipcRenderer.invoke('analyze-if-changed');
+  },
+
+  /**
    * API 사용량 조회
    * @returns {Promise<{daily: number, hourly: number}>}
    */

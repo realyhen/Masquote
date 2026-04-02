@@ -6,7 +6,7 @@
  */
 
 const { ipcMain, BrowserWindow } = require('electron');
-const { captureScreen, captureIfChanged } = require('./capturer');
+const { captureScreen, captureIfChanged, resetChangeDetection } = require('./capturer');
 const { analyzeScreenshot, getUsageStats } = require('./ai-client');
 
 /** 기본 시스템 프롬프트 — Phase 4에서 prompt-manager로 이동 */
@@ -111,6 +111,43 @@ function registerPhase2Handlers(config) {
       }
 
       return errorResult;
+    }
+  });
+
+  // 변화 감지 캡처 + 분석 — Phase 4 자동 트리거에서 사용
+  ipcMain.handle('analyze-if-changed', async (event) => {
+    try {
+      const captureResult = await captureIfChanged(
+        config.capture.comparison,
+        config.capture.analysis
+      );
+
+      // 변화 없으면 분석 스킵
+      if (!captureResult) {
+        return { text: null, source: 'no_change' };
+      }
+
+      const result = await analyzeScreenshot(captureResult.base64, {
+        model: config.ai.primaryModel,
+        systemPrompt: DEFAULT_SYSTEM_PROMPT,
+        userPrompt: buildUserPrompt(),
+        maxTokens: config.ai.maxTokens,
+        temperature: config.ai.temperature,
+        limits: {
+          dailyLimit: config.ai.dailyLimit,
+          hourlyLimit: config.ai.hourlyLimit,
+        },
+      });
+
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('ai-response', result);
+      }
+
+      return result;
+    } catch (err) {
+      console.error('[IPC] analyze-if-changed 오류:', err.message);
+      return { text: null, source: 'error' };
     }
   });
 

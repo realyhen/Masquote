@@ -86,19 +86,6 @@ function registerIpcHandlers() {
     }
   });
 
-  // 드래그 이동 — 렌더러에서 mousedown 시 호출
-  ipcMain.on('start-drag', (event) => {
-    try {
-      const win = BrowserWindow.fromWebContents(event.sender);
-      if (win) {
-        // 커스텀 드래그: 렌더러에서 mousemove 좌표를 전달받아 윈도우 이동
-        // Electron의 기본 드래그는 -webkit-app-region: drag를 사용
-      }
-    } catch (err) {
-      console.error('[IPC] start-drag 오류:', err.message);
-    }
-  });
-
   // 윈도우 위치 이동 — 렌더러에서 드래그 중 좌표 전달
   ipcMain.on('move-window', (event, deltaX, deltaY) => {
     try {
