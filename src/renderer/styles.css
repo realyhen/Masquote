@@ -95,3 +95,41 @@ body * {
   opacity: 0;
   pointer-events: none;
 }
+
+/* ===== 캐릭터 상태 애니메이션 ===== */
+
+/* idle: 살짝 위아래 흔들림 */
+.mascot-idle .mascot-animation {
+  animation: idle-bob 2s ease-in-out infinite;
+}
+
+@keyframes idle-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* walking: 걷기 바운스 + 좌우 기울임 */
+.mascot-walking .mascot-animation {
+  animation: walk-bounce 0.35s ease-in-out infinite;
+}
+
+@keyframes walk-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(3deg); }
+  75% { transform: translateY(-4px) rotate(-3deg); }
+}
+
+/* walking 방향 — 왼쪽으로 걸을 때 캐릭터 좌우 반전 */
+.mascot-walking.walk-left .mascot-animation img {
+  transform: scaleX(-1);
+}
+
+/* speaking: 말할 때 살짝 바운스 */
+.mascot-speaking .mascot-animation {
+  animation: speaking-bounce 0.5s ease-in-out infinite;
+}
+
+@keyframes speaking-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.03); }
+}

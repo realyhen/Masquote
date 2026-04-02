@@ -5,9 +5,10 @@
  *       메인 프로세스와 렌더러 프로세스 사이의 통신을 중개한다.
  */
 
-const { ipcMain } = require('electron');
+const { ipcMain, BrowserWindow } = require('electron');
 const { captureScreen, captureIfChanged } = require('./capturer');
 const { analyzeScreenshot, getUsageStats } = require('./ai-client');
+const { startWalk, stopWalk } = require('./movement');
 
 /** 기본 시스템 프롬프트 — Phase 4에서 prompt-manager로 이동 */
 const DEFAULT_SYSTEM_PROMPT = `너는 '모코'야. 사용자의 데스크탑 화면 구석에 사는 귀여운 AI 마스코트야.
@@ -132,6 +133,19 @@ function registerPhase2Handlers(config) {
   // API 사용량 조회
   ipcMain.handle('get-usage-stats', () => {
     return getUsageStats();
+  });
+
+  // Phase 3: 걷기 시작
+  ipcMain.on('start-walk', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      startWalk(win, config.movement);
+    }
+  });
+
+  // Phase 3: 걷기 중지
+  ipcMain.on('stop-walk', () => {
+    stopWalk();
   });
 }
 

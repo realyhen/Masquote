@@ -68,6 +68,20 @@ contextBridge.exposeInMainWorld('masquoteAPI', {
   },
 
   /**
+   * 걷기 시작 요청 (Phase 3)
+   */
+  startWalk: () => {
+    ipcRenderer.send('start-walk');
+  },
+
+  /**
+   * 걷기 중지 요청 (Phase 3)
+   */
+  stopWalk: () => {
+    ipcRenderer.send('stop-walk');
+  },
+
+  /**
    * 메인 프로세스 이벤트 수신 리스너 등록
    * @param {string} channel - 채널명
    * @param {Function} callback - 콜백 함수
@@ -81,6 +95,7 @@ contextBridge.exposeInMainWorld('masquoteAPI', {
       'capture-status',
       'config-updated',
       'trigger-fired',
+      'walking-direction',
     ];
     if (validChannels.includes(channel)) {
       const wrapped = (_event, ...args) => callback(...args);

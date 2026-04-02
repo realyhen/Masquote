@@ -123,7 +123,8 @@
     isAnalyzing = true;
 
     try {
-      // 분석 중 표시
+      // speaking 상태 전환 (걷기 중이면 중단됨)
+      window.MascotAnimation.startSpeaking();
       window.SpeechBubble.showBubble('화면 보는 중...', 15000, 30);
       console.log('[App] 화면 분석 요청 시작');
 
@@ -141,6 +142,8 @@
       window.SpeechBubble.showBubble('앗, 뭔가 문제가 생겼어!', 3000, 30);
     } finally {
       isAnalyzing = false;
+      // speaking → idle 복귀 (걷기 주기 재시작)
+      window.MascotAnimation.stopSpeaking();
     }
   }
 
@@ -157,12 +160,17 @@
     window.masquoteAPI.on('ai-error', (data) => {
       window.SpeechBubble.showBubble(data.message, 3000, 30);
     });
+
+    // 걷기 방향 전환 수신 (캐릭터 좌우 반전)
+    window.masquoteAPI.on('walking-direction', (direction) => {
+      window.MascotAnimation.updateDirection(direction);
+    });
   }
 
   /**
    * 앱 초기화
    */
-  function init() {
+  async function init() {
     initClickThrough();
     initDrag();
     initClickAnalysis();
@@ -170,6 +178,14 @@
 
     // 시작 인사
     window.SpeechBubble.showBubble('안녕! 나는 모코야~ 클릭하면 화면을 봐줄게!', 5000, 35);
+
+    // 애니메이션 상태 머신 초기화 (설정 로드 후)
+    try {
+      const config = await window.masquoteAPI.getConfig();
+      window.MascotAnimation.init(config);
+    } catch (err) {
+      console.error('[App] 애니메이션 초기화 실패:', err);
+    }
   }
 
   if (document.readyState === 'loading') {
