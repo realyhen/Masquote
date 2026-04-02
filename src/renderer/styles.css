@@ -1,0 +1,97 @@
+/* 전체 배경 투명 처리 — Electron transparent: true와 함께 사용 */
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: rgba(0, 0, 0, 0);
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+}
+
+/* 투명 영역은 클릭 통과, 자식 요소만 클릭 가능 */
+body {
+  pointer-events: none;
+}
+
+body * {
+  pointer-events: all;
+}
+
+/* ===== 캐릭터 컨테이너 ===== */
+.mascot-container {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mascot-container:active {
+  cursor: grabbing;
+}
+
+/* 캐릭터 애니메이션/이미지 영역 */
+.mascot-animation {
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mascot-animation img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+/* ===== 말풍선 ===== */
+.speech-bubble {
+  position: absolute;
+  bottom: 160px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 8px 14px;
+  max-width: 180px;
+  min-width: 60px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #333;
+  word-break: keep-all;
+  text-align: center;
+  transition: opacity 0.3s ease;
+}
+
+/* 말풍선 꼬리 (아래 삼각형) */
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(255, 255, 255, 0.95);
+}
+
+.speech-bubble #speech-text {
+  margin: 0;
+  padding: 0;
+}
+
+/* 숨김 상태 */
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+}

@@ -1,0 +1,52 @@
+{
+  "window": {
+    "width": 200,
+    "height": 250,
+    "alwaysOnTopLevel": "screen-saver",
+    "alwaysOnTopRelativeLevel": 1
+  },
+  "character": {
+    "defaultImage": "moko.png",
+    "idleAnimation": "idle.json",
+    "speakingAnimation": "speaking.json",
+    "walkingAnimation": "walking.json"
+  },
+  "capture": {
+    "intervalSeconds": 10,
+    "comparison": {
+      "width": 640,
+      "height": 360,
+      "quality": 50
+    },
+    "analysis": {
+      "maxWidth": 1280,
+      "maxHeight": 720,
+      "quality": 80
+    }
+  },
+  "ai": {
+    "primaryModel": "gemini-2.5-flash",
+    "fallbackModel": "meta-llama/llama-4-scout-17b-16e-instruct",
+    "maxTokens": 60,
+    "temperature": 0.8,
+    "dailyLimit": 240,
+    "hourlyLimit": 60
+  },
+  "tts": {
+    "lang": "ko-KR",
+    "rate": 1.0,
+    "enabled": true
+  },
+  "trigger": {
+    "cooldownSeconds": 45,
+    "idleMinutes": 3,
+    "sleepMinutes": 10
+  },
+  "movement": {
+    "enabled": true,
+    "speedMin": 1,
+    "speedMax": 3,
+    "walkDurationMs": 5000,
+    "pauseDurationMs": 8000
+  }
+}

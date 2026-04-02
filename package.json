@@ -1,0 +1,19 @@
+{
+  "name": "masquote",
+  "version": "0.1.0",
+  "description": "AI 데스크탑 마스코트 앱 - 화면을 보고 한마디 하는 귀여운 친구",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0"
+  },
+  "dependencies": {
+    "@google/genai": "^1.48.0",
+    "dotenv": "^16.4.7"
+  }
+}

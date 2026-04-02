@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masquote</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 말풍선 영역 (Phase 2에서 활성화) -->
+  <div id="speech-bubble" class="speech-bubble hidden">
+    <p id="speech-text"></p>
+  </div>
+
+  <!-- 캐릭터 영역 -->
+  <div id="mascot" class="mascot-container">
+    <!-- 정적 이미지 (Phase 1) / Lottie 컨테이너 (Phase 3) -->
+    <div id="mascot-animation" class="mascot-animation">
+      <img id="mascot-image" src="../assets/images/moko.svg" alt="모코" draggable="false">
+    </div>
+  </div>
+
+  <script src="speech-bubble.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
