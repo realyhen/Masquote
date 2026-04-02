@@ -70,13 +70,16 @@ function registerPhase2Handlers(config) {
   ipcMain.handle('analyze-screen', async (event) => {
     try {
       // 화면 캡처
+      console.log('[IPC] 화면 캡처 시작...');
       const captureResult = await captureScreen(config.capture.analysis);
       if (!captureResult) {
+        console.warn('[IPC] 캡처 실패 — null 반환됨');
         return {
           text: '화면을 볼 수가 없어... 보안 설정을 확인해줘!',
           source: 'capture_error',
         };
       }
+      console.log(`[IPC] 캡처 성공 (${captureResult.sizeKB}KB), AI 분석 요청...`);
 
       // AI 분석
       const result = await analyzeScreenshot(captureResult.base64, {

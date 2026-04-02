@@ -81,6 +81,64 @@ function checkAndUpdateUsage(limits) {
 }
 
 /**
+ * Gemini 응답 객체에서 텍스트를 추출한다.
+ * SDK 버전에 따라 응답 구조가 다를 수 있으므로 여러 경로를 시도한다.
+ *
+ * @param {object} response - Gemini API 응답 객체
+ * @returns {string} 추출된 텍스트 (실패 시 빈 문자열)
+ */
+function extractText(response) {
+  try {
+    // 후보 텍스트를 candidates에서 재귀적으로 탐색
+    const candidate = response?.candidates?.[0];
+    if (candidate) {
+      // 경로 A: candidate.content.parts[].text
+      const parts = candidate?.content?.parts;
+      if (Array.isArray(parts)) {
+        for (const part of parts) {
+          if (part.text && typeof part.text === 'string') {
+            return part.text.trim();
+          }
+        }
+      }
+      // 경로 B: candidate.text (일부 SDK)
+      if (candidate.text && typeof candidate.text === 'string') {
+        return candidate.text.trim();
+      }
+    }
+
+    // 경로 C: response.text (getter)
+    try {
+      const t = response?.text;
+      if (t && typeof t === 'string') return t.trim();
+    } catch (_) { /* getter가 throw할 수 있음 */ }
+
+    // 경로 D: response.text() (메서드)
+    if (typeof response?.text === 'function') {
+      return response.text().trim();
+    }
+  } catch (err) {
+    console.error('[AI] 텍스트 추출 오류:', err.message);
+  }
+  return '';
+}
+
+/**
+ * Gemini API 호출용 contents 배열을 생성한다.
+ */
+function buildContents(systemPrompt, userPrompt, base64Image) {
+  return [
+    {
+      role: 'user',
+      parts: [
+        { text: systemPrompt + '\n\n' + userPrompt },
+        { inlineData: { mimeType: 'image/jpeg', data: base64Image } },
+      ],
+    },
+  ];
+}
+
+/**
  * 스크린샷을 Gemini에 보내 마스코트 반응을 생성한다.
  *
  * @param {string} base64Image - JPEG 이미지의 base64 인코딩 문자열
@@ -98,7 +156,7 @@ async function analyzeScreenshot(base64Image, options = {}) {
     model = 'gemini-2.5-flash',
     systemPrompt = '',
     userPrompt = '',
-    maxTokens = 60,
+    maxTokens = 400,
     temperature = 0.8,
     limits = { dailyLimit: 240, hourlyLimit: 60 },
   } = options;
@@ -113,55 +171,57 @@ async function analyzeScreenshot(base64Image, options = {}) {
     return { text: '오늘은 너무 많이 떠들었나봐~ 잠시 쉴게!', source: 'limit' };
   }
 
+  const requestConfig = {
+    model,
+    config: { maxOutputTokens: maxTokens, temperature },
+    contents: buildContents(systemPrompt, userPrompt, base64Image),
+  };
+
   try {
-    const response = await genAI.models.generateContent({
-      model,
-      config: {
-        maxOutputTokens: maxTokens,
-        temperature,
-      },
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { text: systemPrompt + '\n\n' + userPrompt },
-            {
-              inlineData: {
-                mimeType: 'image/jpeg',
-                data: base64Image,
-              },
-            },
-          ],
-        },
-      ],
-    });
+    const response = await genAI.models.generateContent(requestConfig);
 
     // 카운터 증가
     usageCounter.daily++;
     usageCounter.hourly++;
 
-    // 응답 구조 방어적 검증 — SDK 버전에 따라 구조가 다를 수 있음
-    let text = '';
-    if (typeof response?.text === 'string') {
-      text = response.text.trim();
-    } else if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      text = response.candidates[0].content.parts[0].text.trim();
-    }
+    const text = extractText(response);
     if (!text) {
-      text = '음... 뭐라고 해야 할지 모르겠어!';
+      console.warn('[AI] 텍스트 추출 실패');
+      return { text: '음... 뭐라고 해야 할지 모르겠어!', source: 'empty' };
     }
 
-    console.log(`[AI] Gemini 응답 (일일 ${usageCounter.daily}/${limits.dailyLimit}): ${text}`);
+    console.log(`[AI] Gemini 응답 (${usageCounter.daily}/${limits.dailyLimit}): ${text}`);
     return { text, source: 'gemini' };
   } catch (err) {
-    console.error('[AI] Gemini API 호출 오류:', err.message);
+    const errMsg = err.message || JSON.stringify(err);
+    console.error('[AI] Gemini API 오류:', errMsg);
 
-    // 429 Rate Limit 또는 기타 에러 처리
-    if (err.status === 429 || err.message?.includes('429')) {
+    // 503 서버 과부하 — 3초 후 1회 재시도
+    if (err.status === 503 || errMsg.includes('503') || errMsg.includes('UNAVAILABLE')) {
+      console.log('[AI] 503 과부하 — 3초 후 재시도...');
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const retry = await genAI.models.generateContent(requestConfig);
+        const retryText = extractText(retry);
+        if (retryText) {
+          usageCounter.daily++;
+          usageCounter.hourly++;
+          console.log('[AI] 재시도 성공:', retryText);
+          return { text: retryText, source: 'gemini' };
+        }
+      } catch (retryErr) {
+        console.error('[AI] 재시도도 실패:', retryErr.message);
+      }
+      return { text: '서버가 바빠서 잠시 쉴게~', source: 'unavailable' };
+    }
+
+    // 429 Rate Limit
+    if (err.status === 429 || errMsg.includes('429')) {
       return { text: '지금은 좀 바빠... 잠시 후에 다시 볼게!', source: 'rate_limit' };
     }
 
-    if (err.status === 403 || err.message?.includes('API key')) {
+    // 403 인증 오류
+    if (err.status === 403 || errMsg.includes('API key')) {
       return { text: 'API 키가 이상해... 설정을 확인해줘!', source: 'auth_error' };
     }
 

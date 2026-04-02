@@ -17,6 +17,8 @@
     didDrag: false,
     startX: 0,
     startY: 0,
+    /** 드래그로 판정할 최소 이동 거리 (px) — 이보다 작으면 클릭으로 취급 */
+    threshold: 5,
   };
 
   /** 분석 중복 방지 플래그 */
@@ -36,6 +38,19 @@
         window.masquoteAPI.setIgnoreMouseEvents(true, { forward: true });
       }
     });
+
+    // 말풍선 위에서도 클릭 수신 (말풍선 클릭으로 숨기기 등)
+    const bubbleEl = document.getElementById('speech-bubble');
+    if (bubbleEl) {
+      bubbleEl.addEventListener('mouseenter', () => {
+        window.masquoteAPI.setIgnoreMouseEvents(false);
+      });
+      bubbleEl.addEventListener('mouseleave', () => {
+        if (!dragState.isDragging) {
+          window.masquoteAPI.setIgnoreMouseEvents(true, { forward: true });
+        }
+      });
+    }
 
     // 초기 상태: 클릭 통과 활성화 (투명 영역이 대부분이므로)
     window.masquoteAPI.setIgnoreMouseEvents(true, { forward: true });
@@ -65,7 +80,12 @@
       const deltaY = e.screenY - dragState.startY;
 
       if (deltaX !== 0 || deltaY !== 0) {
-        dragState.didDrag = true;
+        // 임계값을 넘어야 드래그로 판정 (살짝 흔들림은 클릭으로 유지)
+        if (!dragState.didDrag) {
+          const dist = Math.abs(deltaX) + Math.abs(deltaY);
+          if (dist < dragState.threshold) return;
+          dragState.didDrag = true;
+        }
         window.masquoteAPI.moveWindow(deltaX, deltaY);
         dragState.startX = e.screenX;
         dragState.startY = e.screenY;
@@ -104,13 +124,17 @@
 
     try {
       // 분석 중 표시
-      window.SpeechBubble.showBubble('음... 뭘 하고 있는 거지?', 10000, 30);
+      window.SpeechBubble.showBubble('화면 보는 중...', 15000, 30);
+      console.log('[App] 화면 분석 요청 시작');
 
       // 화면 분석 요청
       const result = await window.masquoteAPI.analyzeScreen();
+      console.log('[App] 분석 결과:', result);
 
       if (result && result.text) {
-        window.SpeechBubble.showBubble(result.text, 6000, 35);
+        window.SpeechBubble.showBubble(result.text, 8000, 35);
+      } else {
+        window.SpeechBubble.showBubble('음... 잘 안 보여!', 3000, 30);
       }
     } catch (err) {
       console.error('[App] 분석 실행 오류:', err);

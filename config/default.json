@@ -1,7 +1,7 @@
 {
   "window": {
-    "width": 200,
-    "height": 250,
+    "width": 250,
+    "height": 400,
     "alwaysOnTopLevel": "screen-saver",
     "alwaysOnTopRelativeLevel": 1
   },
@@ -27,7 +27,7 @@
   "ai": {
     "primaryModel": "gemini-2.5-flash",
     "fallbackModel": "meta-llama/llama-4-scout-17b-16e-instruct",
-    "maxTokens": 60,
+    "maxTokens": 400,
     "temperature": 0.8,
     "dailyLimit": 240,
     "hourlyLimit": 60

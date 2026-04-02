@@ -33,8 +33,8 @@ function loadConfig() {
 function getMinimalConfig() {
   return {
     window: {
-      width: 200,
-      height: 250,
+      width: 250,
+      height: 400,
       alwaysOnTopLevel: 'screen-saver',
       alwaysOnTopRelativeLevel: 1,
     },
