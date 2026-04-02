@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- 몸통 -->
+  <ellipse cx="100" cy="140" rx="55" ry="50" fill="#FFD93D"/>
+  <!-- 얼굴 -->
+  <circle cx="100" cy="95" r="50" fill="#FFD93D"/>
+  <!-- 볼터치 왼쪽 -->
+  <ellipse cx="72" cy="105" rx="12" ry="8" fill="#FFAAA5" opacity="0.6"/>
+  <!-- 볼터치 오른쪽 -->
+  <ellipse cx="128" cy="105" rx="12" ry="8" fill="#FFAAA5" opacity="0.6"/>
+  <!-- 왼쪽 눈 -->
+  <ellipse cx="82" cy="88" rx="6" ry="8" fill="#333"/>
+  <!-- 오른쪽 눈 -->
+  <ellipse cx="118" cy="88" rx="6" ry="8" fill="#333"/>
+  <!-- 눈 하이라이트 왼쪽 -->
+  <circle cx="84" cy="85" r="2.5" fill="#FFF"/>
+  <!-- 눈 하이라이트 오른쪽 -->
+  <circle cx="120" cy="85" r="2.5" fill="#FFF"/>
+  <!-- 입 (미소) -->
+  <path d="M 90 102 Q 100 114 110 102" stroke="#333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- 왼쪽 귀 -->
+  <ellipse cx="62" cy="58" rx="14" ry="20" fill="#FFD93D" transform="rotate(-15, 62, 58)"/>
+  <ellipse cx="62" cy="58" rx="8" ry="13" fill="#FFAAA5" opacity="0.5" transform="rotate(-15, 62, 58)"/>
+  <!-- 오른쪽 귀 -->
+  <ellipse cx="138" cy="58" rx="14" ry="20" fill="#FFD93D" transform="rotate(15, 138, 58)"/>
+  <ellipse cx="138" cy="58" rx="8" ry="13" fill="#FFAAA5" opacity="0.5" transform="rotate(15, 138, 58)"/>
+  <!-- 왼쪽 발 -->
+  <ellipse cx="75" cy="185" rx="18" ry="10" fill="#FFB347"/>
+  <!-- 오른쪽 발 -->
+  <ellipse cx="125" cy="185" rx="18" ry="10" fill="#FFB347"/>
+</svg>
