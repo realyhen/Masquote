@@ -116,24 +116,34 @@
   }
 
   /**
-   * 화면 분석을 실행하고 결과를 말풍선으로 표시한다.
-   * 분석 중에는 "생각하는 중..." 메시지를 표시한다.
+   * 화면 분석을 실행하고 결과를 말풍선 + TTS로 표시한다.
+   * 수동 클릭과 자동 트리거 모두 이 함수를 경유한다.
+   * @param {boolean} [isAuto=false] - 자동 트리거 여부
    */
-  async function triggerAnalysis() {
+  async function triggerAnalysis(isAuto = false) {
     isAnalyzing = true;
 
     try {
-      // speaking 상태 전환 (걷기 중이면 중단됨)
       window.MascotAnimation.startSpeaking();
       window.SpeechBubble.showBubble('화면 보는 중...', 15000, 30);
-      console.log('[App] 화면 분석 요청 시작');
+      console.log(`[App] 화면 분석 요청 시작 (${isAuto ? '자동' : '수동'})`);
 
-      // 화면 분석 요청
-      const result = await window.masquoteAPI.analyzeScreen();
-      console.log('[App] 분석 결과:', result);
+      // 자동 트리거는 변화 감지 후 분석, 수동은 즉시 분석
+      const result = isAuto
+        ? await window.masquoteAPI.analyzeIfChanged()
+        : await window.masquoteAPI.analyzeScreen();
+
+      // 변화 없으면 조용히 복귀
+      if (result && result.source === 'no_change') {
+        window.SpeechBubble.hideBubble();
+        return;
+      }
 
       if (result && result.text) {
-        window.SpeechBubble.showBubble(result.text, 8000, 35);
+        // 말풍선 + 타이핑 완료 시 TTS
+        window.SpeechBubble.showBubble(result.text, 8000, 35, (text) => {
+          window.TTS.speak(text);
+        });
       } else {
         window.SpeechBubble.showBubble('음... 잘 안 보여!', 3000, 30);
       }
@@ -142,8 +152,8 @@
       window.SpeechBubble.showBubble('앗, 뭔가 문제가 생겼어!', 3000, 30);
     } finally {
       isAnalyzing = false;
-      // speaking → idle 복귀 (걷기 주기 재시작)
       window.MascotAnimation.stopSpeaking();
+      window.TriggerScheduler.markAnalysis();
     }
   }
 
@@ -179,12 +189,14 @@
     // 시작 인사
     window.SpeechBubble.showBubble('안녕! 나는 모코야~ 클릭하면 화면을 봐줄게!', 5000, 35);
 
-    // 애니메이션 상태 머신 초기화 (설정 로드 후)
+    // 설정 로드 후 모듈 초기화
     try {
       const config = await window.masquoteAPI.getConfig();
       window.MascotAnimation.init(config);
+      window.TTS.init(config.tts);
+      window.TriggerScheduler.init(config, () => triggerAnalysis(true));
     } catch (err) {
-      console.error('[App] 애니메이션 초기화 실패:', err);
+      console.error('[App] 모듈 초기화 실패:', err);
     }
   }
 

@@ -9,7 +9,7 @@ const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('node:path');
 const { loadConfig } = require('./config');
 const { initAIClient } = require('./ai-client');
-const { registerPhase2Handlers } = require('./ipc-handlers');
+const { registerIpcHandlers } = require('./ipc-handlers');
 
 // .env 파일에서 API 키 로드
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
@@ -126,7 +126,7 @@ app.whenReady().then(() => {
   } else {
     console.warn('[Main] GEMINI_API_KEY가 .env에 설정되지 않았습니다.');
   }
-  registerPhase2Handlers(config);
+  registerIpcHandlers(config);
 
   mainWindow = createMascotWindow();
 

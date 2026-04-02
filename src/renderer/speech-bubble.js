@@ -21,8 +21,9 @@ let isShowing = false;
  * @param {string} text - 표시할 텍스트
  * @param {number} [durationMs=5000] - 타이핑 완료 후 표시 유지 시간 (밀리초)
  * @param {number} [typingSpeedMs=40] - 글자당 타이핑 속도 (밀리초)
+ * @param {Function} [onTypingDone] - 타이핑 완료 시 호출되는 콜백
  */
-function showBubble(text, durationMs = 5000, typingSpeedMs = 40) {
+function showBubble(text, durationMs = 5000, typingSpeedMs = 40, onTypingDone = null) {
   const bubble = document.getElementById('speech-bubble');
   const textEl = document.getElementById('speech-text');
 
@@ -45,6 +46,9 @@ function showBubble(text, durationMs = 5000, typingSpeedMs = 40) {
     } else {
       clearInterval(typingInterval);
       typingInterval = null;
+
+      // 타이핑 완료 콜백 (TTS 등)
+      if (onTypingDone) onTypingDone(text);
 
       // 타이핑 완료 후 일정 시간 뒤 숨김
       hideTimer = setTimeout(() => {
