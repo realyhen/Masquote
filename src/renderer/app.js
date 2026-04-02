@@ -1,7 +1,8 @@
 /**
  * 렌더러 프로세스 진입점
  *
- * 역할: 캐릭터 UI 이벤트 바인딩, 클릭 통과 제어, 드래그 이동 처리
+ * 역할: 캐릭터 UI 이벤트 바인딩, 클릭 통과 제어, 드래그 이동 처리,
+ *       캐릭터 클릭 시 AI 분석 트리거, AI 응답 말풍선 표시
  */
 
 (function () {
@@ -13,9 +14,13 @@
   /** 드래그 상태 관리 */
   const dragState = {
     isDragging: false,
+    didDrag: false,
     startX: 0,
     startY: 0,
   };
+
+  /** 분석 중복 방지 플래그 */
+  let isAnalyzing = false;
 
   /**
    * 클릭 통과 제어를 초기화한다.
@@ -42,16 +47,14 @@
    */
   function initDrag() {
     mascotEl.addEventListener('mousedown', (e) => {
-      // 좌클릭만 허용
       if (e.button !== 0) return;
 
       dragState.isDragging = true;
+      dragState.didDrag = false;
       dragState.startX = e.screenX;
       dragState.startY = e.screenY;
 
-      // 드래그 중에는 클릭 통과 비활성화
       window.masquoteAPI.setIgnoreMouseEvents(false);
-
       e.preventDefault();
     });
 
@@ -61,8 +64,8 @@
       const deltaX = e.screenX - dragState.startX;
       const deltaY = e.screenY - dragState.startY;
 
-      // 델타가 0이면 불필요한 IPC 호출 방지
       if (deltaX !== 0 || deltaY !== 0) {
+        dragState.didDrag = true;
         window.masquoteAPI.moveWindow(deltaX, deltaY);
         dragState.startX = e.screenX;
         dragState.startY = e.screenY;
@@ -71,46 +74,64 @@
 
     document.addEventListener('mouseup', () => {
       if (!dragState.isDragging) return;
-
       dragState.isDragging = false;
-
-      // 마우스가 캐릭터 밖에 있을 수 있으므로 클릭 통과 복원
       window.masquoteAPI.setIgnoreMouseEvents(true, { forward: true });
     });
   }
 
   /**
-   * 말풍선을 표시한다 (Phase 2에서 본격 사용)
-   * @param {string} text - 표시할 텍스트
-   * @param {number} [durationMs=5000] - 표시 시간 (밀리초)
+   * 캐릭터 클릭 시 화면 분석을 트리거한다.
+   * 드래그 동작과 구분하기 위해 didDrag 플래그를 확인한다.
    */
-  function showSpeechBubble(text, durationMs = 5000) {
-    const bubble = document.getElementById('speech-bubble');
-    const textEl = document.getElementById('speech-text');
+  function initClickAnalysis() {
+    mascotEl.addEventListener('click', async () => {
+      // 드래그 후 mouseup이면 클릭으로 취급하지 않음
+      if (dragState.didDrag) return;
 
-    textEl.textContent = text;
-    bubble.classList.remove('hidden');
+      // 중복 분석 방지
+      if (isAnalyzing) return;
 
-    // 일정 시간 후 숨김
-    clearTimeout(showSpeechBubble._hideTimer);
-    showSpeechBubble._hideTimer = setTimeout(() => {
-      bubble.classList.add('hidden');
-    }, durationMs);
+      await triggerAnalysis();
+    });
   }
-  showSpeechBubble._hideTimer = null;
+
+  /**
+   * 화면 분석을 실행하고 결과를 말풍선으로 표시한다.
+   * 분석 중에는 "생각하는 중..." 메시지를 표시한다.
+   */
+  async function triggerAnalysis() {
+    isAnalyzing = true;
+
+    try {
+      // 분석 중 표시
+      window.SpeechBubble.showBubble('음... 뭘 하고 있는 거지?', 10000, 30);
+
+      // 화면 분석 요청
+      const result = await window.masquoteAPI.analyzeScreen();
+
+      if (result && result.text) {
+        window.SpeechBubble.showBubble(result.text, 6000, 35);
+      }
+    } catch (err) {
+      console.error('[App] 분석 실행 오류:', err);
+      window.SpeechBubble.showBubble('앗, 뭔가 문제가 생겼어!', 3000, 30);
+    } finally {
+      isAnalyzing = false;
+    }
+  }
 
   /**
    * 메인 프로세스 이벤트 리스너를 등록한다.
    */
   function initEventListeners() {
-    // AI 응답 수신 시 말풍선 표시 (Phase 2에서 활성화)
+    // AI 응답 수신 시 말풍선 표시 (메인에서 push하는 경우)
     window.masquoteAPI.on('ai-response', (data) => {
-      showSpeechBubble(data.text);
+      window.SpeechBubble.showBubble(data.text, 6000, 35);
     });
 
     // 에러 수신 시 말풍선으로 안내
     window.masquoteAPI.on('ai-error', (data) => {
-      showSpeechBubble(data.message, 3000);
+      window.SpeechBubble.showBubble(data.message, 3000, 30);
     });
   }
 
@@ -120,13 +141,13 @@
   function init() {
     initClickThrough();
     initDrag();
+    initClickAnalysis();
     initEventListeners();
 
-    // Phase 1 동작 확인용 — 시작 인사
-    showSpeechBubble('안녕! 나는 모코야~ 🐾', 4000);
+    // 시작 인사
+    window.SpeechBubble.showBubble('안녕! 나는 모코야~ 클릭하면 화면을 봐줄게!', 5000, 35);
   }
 
-  // DOM 로드 완료 후 초기화
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

@@ -8,6 +8,11 @@
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('node:path');
 const { loadConfig } = require('./config');
+const { initAIClient } = require('./ai-client');
+const { registerPhase2Handlers } = require('./ipc-handlers');
+
+// .env 파일에서 API 키 로드
+require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
 // Windows 11 투명 렌더링 버그 방지 — GPU 가속 비활성화
 app.disableHardwareAcceleration();
@@ -123,7 +128,19 @@ function registerIpcHandlers() {
  */
 app.whenReady().then(() => {
   config = loadConfig();
+
+  // Phase 1 IPC 핸들러
   registerIpcHandlers();
+
+  // Phase 2: AI 클라이언트 초기화 + 캡처/분석 IPC 핸들러
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey) {
+    initAIClient(geminiKey);
+  } else {
+    console.warn('[Main] GEMINI_API_KEY가 .env에 설정되지 않았습니다.');
+  }
+  registerPhase2Handlers(config);
+
   mainWindow = createMascotWindow();
 
   app.on('activate', () => {

@@ -35,6 +35,31 @@ contextBridge.exposeInMainWorld('masquoteAPI', {
   },
 
   /**
+   * 화면 캡처 요청
+   * @param {object} [options] - 캡처 옵션 { maxWidth, maxHeight, quality }
+   * @returns {Promise<{base64: string, mimeType: string, sizeKB: number}|null>}
+   */
+  captureScreen: (options) => {
+    return ipcRenderer.invoke('capture-screen', options);
+  },
+
+  /**
+   * 화면 분석 요청 (캡처 + AI 분석 통합)
+   * @returns {Promise<{text: string, source: string}>} AI 응답
+   */
+  analyzeScreen: () => {
+    return ipcRenderer.invoke('analyze-screen');
+  },
+
+  /**
+   * API 사용량 조회
+   * @returns {Promise<{daily: number, hourly: number}>}
+   */
+  getUsageStats: () => {
+    return ipcRenderer.invoke('get-usage-stats');
+  },
+
+  /**
    * 메인 프로세스 이벤트 수신 리스너 등록
    * @param {string} channel - 채널명
    * @param {Function} callback - 콜백 함수
