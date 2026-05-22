@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Masquote 설정</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Masquote 설정</h1>
+
+    <section class="card">
+      <h2>음성 (TTS)</h2>
+      <label class="row">
+        <span>음성 읽기 활성화</span>
+        <input type="checkbox" id="tts-enabled" />
+      </label>
+      <label class="row">
+        <span>속도</span>
+        <input type="range" id="tts-rate" min="0.5" max="2" step="0.1" />
+        <output id="tts-rate-out"></output>
+      </label>
+    </section>
+
+    <section class="card">
+      <h2>자동 트리거</h2>
+      <label class="row">
+        <span>비활동 감지 (분)</span>
+        <input type="number" id="trigger-idle" min="1" max="60" step="1" />
+      </label>
+      <label class="row">
+        <span>쿨다운 (초)</span>
+        <input type="number" id="trigger-cooldown" min="10" max="600" step="5" />
+      </label>
+      <label class="row">
+        <span>sleep 모드 진입 (분)</span>
+        <input type="number" id="trigger-sleep" min="5" max="180" step="5" />
+      </label>
+    </section>
+
+    <section class="card">
+      <h2>걸어다니기</h2>
+      <label class="row">
+        <span>화면 하단 걸어다니기</span>
+        <input type="checkbox" id="movement-enabled" />
+      </label>
+    </section>
+
+    <section class="card">
+      <h2>AI</h2>
+      <label class="row">
+        <span>프롬프트 (성격)</span>
+        <select id="prompt-select">
+          <option value="">자동 (순환)</option>
+        </select>
+      </label>
+      <label class="row">
+        <span>일일 한도 (회)</span>
+        <input type="number" id="ai-daily" min="10" max="2000" step="10" />
+      </label>
+      <label class="row">
+        <span>시간당 한도 (회)</span>
+        <input type="number" id="ai-hourly" min="5" max="500" step="5" />
+      </label>
+      <div class="usage" id="usage-info"></div>
+    </section>
+
+    <section class="actions">
+      <button id="reset-btn" class="secondary">기본값으로 초기화</button>
+      <span id="save-status" class="status"></span>
+    </section>
+  </main>
+
+  <script src="settings.js"></script>
+</body>
+</html>

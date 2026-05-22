@@ -35,6 +35,33 @@ contextBridge.exposeInMainWorld('masquoteAPI', {
   },
 
   /**
+   * 단일 설정 갱신 (점 표기 경로)
+   * @param {string} dottedPath - 예: "tts.rate", "movement.enabled"
+   * @param {*} value
+   * @returns {Promise<boolean>}
+   */
+  updateSetting: (dottedPath, value) => {
+    return ipcRenderer.invoke('update-setting', dottedPath, value);
+  },
+
+  /**
+   * 여러 설정 일괄 갱신
+   * @param {Record<string, *>} patches
+   * @returns {Promise<boolean>}
+   */
+  updateSettings: (patches) => {
+    return ipcRenderer.invoke('update-settings', patches);
+  },
+
+  /**
+   * 사용자 설정 초기화 (기본값 복귀)
+   * @returns {Promise<object>} 새 설정
+   */
+  resetSettings: () => {
+    return ipcRenderer.invoke('reset-settings');
+  },
+
+  /**
    * 화면 캡처 요청
    * @param {object} [options] - 캡처 옵션 { maxWidth, maxHeight, quality }
    * @returns {Promise<{base64: string, mimeType: string, sizeKB: number}|null>}
@@ -92,6 +119,8 @@ contextBridge.exposeInMainWorld('masquoteAPI', {
       'ai-response',
       'ai-error',
       'walking-direction',
+      'settings-updated',
+      'tray-trigger-analysis',
     ];
     if (validChannels.includes(channel)) {
       const wrapped = (_event, ...args) => callback(...args);

@@ -126,5 +126,16 @@
     document.removeEventListener('wheel', onActivity);
   }
 
-  window.TriggerScheduler = { init, markAnalysis, destroy };
+  /**
+   * 설정만 갱신한다 (앱 실행 중 사용자가 설정 UI에서 바꿨을 때).
+   * @param {object} config - 전체 설정 객체
+   */
+  function updateConfig(config) {
+    if (config && config.trigger) {
+      triggerConfig = config.trigger;
+      console.log(`[Trigger] 설정 갱신 (idle: ${triggerConfig.idleMinutes}분, cooldown: ${triggerConfig.cooldownSeconds}초)`);
+    }
+  }
+
+  window.TriggerScheduler = { init, markAnalysis, destroy, updateConfig };
 })();

@@ -62,15 +62,31 @@ const PROMPT_VARIANTS = [
 let currentIndex = 0;
 
 /**
- * 다음 시스템 프롬프트를 반환한다 (순환).
+ * 다음 시스템 프롬프트를 반환한다.
+ * forced가 주어지면 해당 변형으로 고정, 아니면 순환 로테이션.
+ * @param {string|null} [forced] - 강제 선택할 변형 이름 (예: '츤데레')
  * @returns {{ name: string, prompt: string }} 프롬프트 이름과 내용
  */
-function getNextPrompt() {
-  const variant = PROMPT_VARIANTS[currentIndex];
-  currentIndex = (currentIndex + 1) % PROMPT_VARIANTS.length;
+function getNextPrompt(forced = null) {
+  let variant;
+  if (forced) {
+    variant = PROMPT_VARIANTS.find((v) => v.name === forced);
+  }
+  if (!variant) {
+    variant = PROMPT_VARIANTS[currentIndex];
+    currentIndex = (currentIndex + 1) % PROMPT_VARIANTS.length;
+  }
 
   const prompt = `${variant.persona}\n\n${CORE_RULES}\n\n${variant.style}`;
   return { name: variant.name, prompt };
+}
+
+/**
+ * 사용 가능한 모든 프롬프트 변형 이름을 반환한다 (설정 UI용).
+ * @returns {string[]}
+ */
+function getPromptNames() {
+  return PROMPT_VARIANTS.map((v) => v.name);
 }
 
 /**
@@ -95,4 +111,4 @@ function buildUserPrompt() {
 모코의 반응:`;
 }
 
-module.exports = { getNextPrompt, buildUserPrompt };
+module.exports = { getNextPrompt, buildUserPrompt, getPromptNames };

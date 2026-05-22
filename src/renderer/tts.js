@@ -58,5 +58,13 @@
     }
   }
 
-  window.TTS = { init, speak, cancel };
+  /**
+   * 설정만 갱신한다 (앱 실행 중 사용자가 설정 UI에서 바꿨을 때).
+   * @param {object} config - 새 tts 설정
+   */
+  function updateConfig(config) {
+    if (config) ttsConfig = { ...ttsConfig, ...config };
+  }
+
+  window.TTS = { init, speak, cancel, updateConfig };
 })();
