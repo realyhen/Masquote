@@ -181,6 +181,7 @@
       console.log('[App] 설정 갱신 수신');
       window.TTS.updateConfig(config.tts);
       window.TriggerScheduler.updateConfig(config);
+      window.MascotAnimation.updateConfig(config);
     });
 
     // 트레이 메뉴에서 "지금 한마디" 트리거 수신

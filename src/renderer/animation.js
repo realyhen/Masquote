@@ -163,6 +163,30 @@
     return currentState;
   }
 
+  /**
+   * movement 설정만 갱신한다 (앱 실행 중 사용자가 설정 UI에서 바꿨을 때).
+   * enabled=false → 진행 중 걷기/예약 즉시 중단. enabled=true → idle이면 다음 walk 예약.
+   * @param {object} config - 전체 설정 객체 (movement 섹션 포함)
+   */
+  function updateConfig(config) {
+    if (!config || !config.movement) return;
+    const wasEnabled = movementConfig?.enabled;
+    movementConfig = config.movement;
+    console.log(`[Animation] movement 설정 갱신 (enabled: ${movementConfig.enabled})`);
+
+    if (wasEnabled && !movementConfig.enabled) {
+      // 끄기: 예약 + 진행중 걷기 즉시 중단
+      clearTimers();
+      if (currentState === 'walking') {
+        window.masquoteAPI.stopWalk();
+        setState('idle');
+      }
+    } else if (!wasEnabled && movementConfig.enabled) {
+      // 켜기: idle이면 다음 walk 예약
+      if (currentState === 'idle') scheduleNextWalk();
+    }
+  }
+
   // 전역 노출
   window.MascotAnimation = {
     init,
@@ -172,5 +196,6 @@
     stopSpeaking,
     stopWalking,
     getState,
+    updateConfig,
   };
 })();

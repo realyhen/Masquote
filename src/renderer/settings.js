@@ -53,11 +53,16 @@
   }
 
   /**
-   * 사용 가능한 프롬프트 목록을 드롭다운에 채운다.
-   * 메인이 노출한 채널이 없으면 하드코딩 fallback.
+   * 사용 가능한 프롬프트 목록을 메인에서 받아 드롭다운에 채운다.
    */
   async function populatePromptOptions() {
-    const names = ['기본', '츤데레', '응원단', '관찰자', '잠꾸러기'];
+    let names = [];
+    try {
+      names = await window.masquoteAPI.getPromptNames();
+    } catch (_) { /* fallback below */ }
+    if (!Array.isArray(names) || names.length === 0) {
+      names = ['기본', '츤데레', '응원단', '관찰자', '잠꾸러기'];
+    }
     for (const name of names) {
       const opt = document.createElement('option');
       opt.value = name;
@@ -132,9 +137,9 @@
     els.aiHourly.addEventListener('change', () => save('ai.hourlyLimit', clampInt(els.aiHourly, 5, 500)));
 
     els.resetBtn.addEventListener('click', async () => {
-      const ok = await window.masquoteAPI.resetSettings();
-      if (ok) {
-        applyConfigToForm(ok);
+      const freshConfig = await window.masquoteAPI.resetSettings();
+      if (freshConfig) {
+        applyConfigToForm(freshConfig);
         flashSaved();
       }
     });

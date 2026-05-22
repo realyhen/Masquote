@@ -21,24 +21,24 @@ require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 app.disableHardwareAcceleration();
 app.commandLine.appendSwitch('disable-gpu-compositing');
 
+/** @type {BrowserWindow|null} 마스코트 메인 윈도우 */
+let mainWindow = null;
+
+/** @type {object} 앱 설정 */
+let config = null;
+
 // 단일 인스턴스 락 — 두 번째 실행이 시도되면 기존 윈도우를 표시하고 종료
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       if (!mainWindow.isVisible()) mainWindow.show();
       mainWindow.focus();
     }
   });
 }
-
-/** @type {BrowserWindow|null} 마스코트 메인 윈도우 */
-let mainWindow = null;
-
-/** @type {object} 앱 설정 */
-let config = null;
 
 /**
  * 마스코트 윈도우를 생성한다.

@@ -9,7 +9,7 @@ const { ipcMain, BrowserWindow } = require('electron');
 const { captureScreen, captureIfChanged } = require('./capturer');
 const { analyzeScreenshot, getUsageStats } = require('./ai-client');
 const { startWalk, stopWalk } = require('./movement');
-const { getNextPrompt, buildUserPrompt } = require('./prompt-manager');
+const { getNextPrompt, buildUserPrompt, getPromptNames } = require('./prompt-manager');
 const { getSettings, updateSetting, updateSettings, resetSettings } = require('./settings');
 
 /**
@@ -138,6 +138,8 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('get-usage-stats', () => getUsageStats());
+
+  ipcMain.handle('get-prompt-names', () => getPromptNames());
 
   // ── 걷기 ──
 

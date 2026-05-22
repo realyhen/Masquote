@@ -88,10 +88,18 @@ contextBridge.exposeInMainWorld('masquoteAPI', {
 
   /**
    * API 사용량 조회
-   * @returns {Promise<{daily: number, hourly: number}>}
+   * @returns {Promise<{gemini: {daily,hourly}, groq: {daily,hourly}}>}
    */
   getUsageStats: () => {
     return ipcRenderer.invoke('get-usage-stats');
+  },
+
+  /**
+   * 사용 가능한 프롬프트 변형 이름 목록 조회
+   * @returns {Promise<string[]>}
+   */
+  getPromptNames: () => {
+    return ipcRenderer.invoke('get-prompt-names');
   },
 
   /**
